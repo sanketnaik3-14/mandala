@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Enhanced Mandala Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #avatarOutput svg {
+            transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        #generateBtn:active {
+            transform: scale(0.95);
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+
+            50% {
+                transform: scale(1.03);
+                opacity: 0.9;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .rotate {
+            animation: rotate 30s linear infinite;
+        }
+
+        @keyframes rotate {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spin {
+            animation: spin 15s linear infinite;
+        }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .ripple {
+            animation: ripple 4s ease-out infinite;
+        }
+
+        @keyframes ripple {
+            0% {
+                transform: scale(0.95);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1.05);
+                opacity: 0;
+            }
+        }
+
+        .color-transition {
+            animation: colorTransition 20s infinite alternate;
+        }
+
+        @keyframes colorTransition {
+            0% {
+                filter: hue-rotate(0deg);
+            }
+
+            100% {
+                filter: hue-rotate(360deg);
+            }
+        }
+
+        .shape-builder {
+            background: rgba(30, 41, 59, 0.7);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 text-slate-200 antialiased">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <header class="text-center mb-8">
+            <h1
+                class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">
+                The Enhanced Mandala Generator</h1>
+            <p class="mt-4 text-lg text-slate-400">Creative, Hash-Driven Mandalas with Advanced Features</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Controls -->
+            <div class="lg:col-span-1 glassmorphism rounded-2xl p-6 shadow-2xl h-fit">
+                <h2 class="text-xl font-semibold mb-4 text-white">Controls</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label for="userIdInput" class="block mb-2 text-sm font-medium text-slate-300">User ID (Postgres
+                            UUID)</label>
+                        <input type="text" id="userIdInput"
+                            class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-violet-500 focus:outline-none transition">
+                    </div>
+                    <button id="randomIdBtn"
+                        class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition">Generate
+                        Random ID</button>
+                    <button id="generateBtn"
+                        class="w-full bg-gradient-to-r from-violet-500 to-cyan-500 hover:from-violet-400 hover:to-cyan-400 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform transition">
+                        Generate Mandala
+                    </button>
+
+                    <div class="shape-builder">
+                        <h3 class="text-md font-medium text-white mb-2">Design Options</h3>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center">
+                                <input type="checkbox" id="animateToggle" class="mr-2" checked>
+                                <span class="text-sm">Animations</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="gradientToggle" class="mr-2" checked>
+                                <span class="text-sm">Gradients</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="reflectionToggle" class="mr-2" checked>
+                                <span class="text-sm">Reflection</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="innerToggle" class="mr-2" checked>
+                                <span class="text-sm">Inner Elements</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Display -->
+            <div class="lg:col-span-2 space-y-8">
+                <div class="glassmorphism rounded-2xl p-6 shadow-2xl">
+                    <h2 class="text-xl font-semibold mb-4 text-white">Generated Mandala</h2>
+                    <div class="flex justify-center items-center bg-slate-800/50 rounded-lg p-4 min-h-[420px]">
+                        <div id="avatarOutput"
+                            class="w-96 h-96 rounded-full shadow-2xl bg-slate-900 flex items-center justify-center">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glassmorphism rounded-2xl p-6 shadow-2xl">
+                    <h2 class="text-xl font-semibold mb-4 text-white">Genetic Code (SHA-256 Hash)</h2>
+                    <div
+                        class="bg-slate-900 rounded-lg p-4 border border-slate-700 font-mono text-sm break-all text-violet-300">
+                        <span id="hashOutput"></span>
+                    </div>
+                </div>
+
+                <div class="glassmorphism rounded-2xl p-6 shadow-2xl">
+                    <h2 class="text-xl font-semibold mb-4 text-white">Generated SVG Code</h2>
+                    <div class="bg-slate-900 rounded-lg p-4 max-h-96 overflow-auto border border-slate-700">
+                        <pre><code id="svgCodeOutput" class="language-xml text-sm text-slate-300 whitespace-pre-wrap"></code></pre>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const userIdInput = document.getElementById('userIdInput');
+        const randomIdBtn = document.getElementById('randomIdBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const avatarOutput = document.getElementById('avatarOutput');
+        const svgCodeOutput = document.getElementById('svgCodeOutput');
+        const hashOutput = document.getElementById('hashOutput');
+        const animateToggle = document.getElementById('animateToggle');
+        const gradientToggle = document.getElementById('gradientToggle');
+        const reflectionToggle = document.getElementById('reflectionToggle');
+        const innerToggle = document.getElementById('innerToggle');
+
+        // --- HASHING UTILITY ---
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // --- SVG & Math Helpers ---
+        function polarToCartesian(cx, cy, r, angle) {
+            const rad = (angle - 90) * Math.PI / 180.0;
+            return { x: cx + (r * Math.cos(rad)), y: cy + (r * Math.sin(rad)) };
+        }
+
+        // --- NEW: Enhanced procedural shape functions ---
+        const shapeFunctions = [
+            // 1. Line Spikes (original)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                let lines = '';
+                const angleStep = 360 / count;
+                const innerR = r - layerThickness / 2;
+                const outerR = r + layerThickness / 2;
+                const strokeWidth = 1 + (parseInt(hashChunk[1], 16) % 4);
+                for (let i = 0; i < count; i++) {
+                    const p1 = polarToCartesian(cx, cy, innerR, i * angleStep);
+                    const p2 = polarToCartesian(cx, cy, outerR, i * angleStep);
+                    lines += `<line x1="${p1.x}" y1="${p1.y}" x2="${p2.x}" y2="${p2.y}" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" />`;
+                }
+                return lines;
+            },
+            // 2. Gradient Ring (original)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                const ringWidth = layerThickness * (0.5 + (parseInt(hashChunk[0], 16) % 6 / 10));
+                const gradId = `grad-${defs.length}`;
+                const angle = parseInt(hashChunk.substring(1, 3), 16) % 360;
+
+                defs.push(`
+                    <linearGradient id="${gradId}" x1="0%" y1="0%" x2="100%" y2="0%" gradientTransform="rotate(${angle})">
+                        <stop offset="0%" stop-color="${color}" stop-opacity="1" />
+                        <stop offset="100%" stop-color="${color}" stop-opacity="0.2" />
+                    </linearGradient>
+                `);
+
+                return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#${gradId})" stroke-width="${ringWidth}" />`;
+            },
+            // 3. Chevron Ring (original)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                let path = '';
+                const angleStep = 360 / count;
+                const innerR = r - layerThickness / 2;
+                const outerR = r + layerThickness / 2;
+                const strokeWidth = 1 + (parseInt(hashChunk[1], 16) % 5);
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const p1 = polarToCartesian(cx, cy, innerR, angle - angleStep / 2);
+                    const p2 = polarToCartesian(cx, cy, outerR, angle);
+                    const p3 = polarToCartesian(cx, cy, innerR, angle + angleStep / 2);
+                    path += `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y} `;
+                }
+                return `<path d="${path}" stroke="${color}" stroke-width="${strokeWidth}" fill="none" stroke-linejoin="round" stroke-linecap="round" />`;
+            },
+            // 4. Scalloped Arcs (original)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                let path = '';
+                const angleStep = 360 / count;
+                const strokeWidth = 1 + (parseInt(hashChunk[0], 16) % 5);
+                const arcRadius = (layerThickness / 2) * (0.5 + (parseInt(hashChunk[1], 16) / 15) * 0.5);
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const p1 = polarToCartesian(cx, cy, r, angle - angleStep / 2);
+                    const p2 = polarToCartesian(cx, cy, r, angle + angleStep / 2);
+                    path += `M ${p1.x} ${p1.y} A ${arcRadius} ${arcRadius} 0 0 1 ${p2.x} ${p2.y} `;
+                }
+                return `<path d="${path}" stroke="${color}" stroke-width="${strokeWidth}" fill="none" stroke-linecap="round" />`;
+            },
+            // 5. Flower Petals (new)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                let petals = '';
+                const angleStep = 360 / count;
+                const petalLength = layerThickness * (0.4 + (parseInt(hashChunk[0], 16) / 16 * 0.4));
+                const petalWidth = layerThickness * 0.3;
+
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const start = polarToCartesian(cx, cy, r, angle);
+
+                    // Control points for bezier curve to create petal shape
+                    const ctrl1 = polarToCartesian(cx, cy, r + petalLength, angle - 15);
+                    const ctrl2 = polarToCartesian(cx, cy, r + petalLength, angle + 15);
+                    const end = polarToCartesian(cx, cy, r, angle);
+
+                    petals += `<path d="M${start.x},${start.y} C${ctrl1.x},${ctrl1.y} ${ctrl2.x},${ctrl2.y} ${end.x},${end.y} Z" 
+                                  fill="${color}" opacity="0.7" stroke="${color}" stroke-width="1" />`;
+                }
+                return petals;
+            },
+            // 6. Spiral Sun (new)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                let spiral = '';
+                const angleStep = 360 / count;
+                const spiralTurns = 2 + (parseInt(hashChunk[0], 16) % 3);
+                const innerR = r - layerThickness / 2;
+                const outerR = r + layerThickness / 2;
+
+                for (let i = 0; i < count; i++) {
+                    let path = `M${cx},${cy} `;
+                    const startAngle = i * angleStep;
+                    const segments = 30;
+
+                    for (let j = 0; j <= segments; j++) {
+                        const progress = j / segments;
+                        const angle = startAngle + spiralTurns * 360 * progress;
+                        const radius = innerR + (outerR - innerR) * progress;
+                        const point = polarToCartesian(cx, cy, radius, angle);
+                        path += `L${point.x},${point.y} `;
+                    }
+
+                    spiral += `<path d="${path}" fill="none" stroke="${color}" stroke-width="${1 + (parseInt(hashChunk[1], 16)) % 3}" />`;
+                }
+                return spiral;
+            },
+            // 7. Geometric Stars (new)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                let stars = '';
+                const angleStep = 360 / count;
+                const starPoints = 5 + (parseInt(hashChunk[0], 16) % 4);
+                const starSize = layerThickness * 0.3;
+
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const center = polarToCartesian(cx, cy, r, angle);
+                    let points = '';
+
+                    for (let j = 0; j < starPoints * 2; j++) {
+                        const radius = j % 2 === 0 ? starSize : starSize * 0.5;
+                        const pointAngle = angle + (j * 360 / (starPoints * 2));
+                        const point = polarToCartesian(center.x, center.y, radius, pointAngle);
+                        points += `${point.x},${point.y} `;
+                    }
+
+                    stars += `<polygon points="${points}" fill="${color}" opacity="0.8" stroke="${color}" stroke-width="1" />`;
+                }
+                return stars;
+            },
+            // 8. Crescent Moons (new)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                let crescents = '';
+                const angleStep = 360 / count;
+                const crescentSize = layerThickness * 0.4;
+
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const center = polarToCartesian(cx, cy, r, angle);
+
+                    // Outer circle
+                    const outerCircle = `<circle cx="${center.x}" cy="${center.y}" r="${crescentSize}" fill="${color}" />`;
+
+                    // Inner circle to create crescent shape
+                    const offsetX = crescentSize * 0.6;
+                    const innerCircle = `<circle cx="${center.x + offsetX}" cy="${center.y}" r="${crescentSize * 0.8}" fill="${color}" fill-opacity="1" />`;
+
+                    crescents += `<g>${outerCircle}${innerCircle}</g>`;
+                }
+                return crescents;
+            },
+            // 9. Interlocking Rings (new)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                let rings = '';
+                const angleStep = 360 / count;
+                const ringSize = layerThickness * 0.4;
+                const ringSpacing = layerThickness * 0.1;
+
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const center = polarToCartesian(cx, cy, r, angle);
+
+                    rings += `<circle cx="${center.x}" cy="${center.y}" r="${ringSize}" fill="none" stroke="${color}" stroke-width="${ringSpacing}" />`;
+
+                    // Add inner connection rings
+                    if (i % 2 === 0) {
+                        const nextCenter = polarToCartesian(cx, cy, r, angle + angleStep);
+                        rings += `<line x1="${center.x}" y1="${center.y}" x2="${nextCenter.x}" y2="${nextCenter.y}" stroke="${color}" stroke-width="${ringSpacing / 2}" />`;
+                    }
+                }
+                return rings;
+            },
+            // 10. Radial Waves (new)
+            ({ hashChunk, cx, cy, r, count, color, defs, layerThickness }) => {
+                let waves = '';
+                const waveCount = 6 + (parseInt(hashChunk[0], 16) % 5);
+                const amplitude = layerThickness * 0.2;
+                const wavelength = 360 / waveCount;
+
+                // Create a wavy path
+                let path = `M${cx},${cy - r}`;
+                for (let i = 0; i <= 360; i += 5) {
+                    const waveOffset = Math.sin(i * Math.PI / 180 * waveCount) * amplitude;
+                    const point = polarToCartesian(cx, cy, r + waveOffset, i);
+                    path += `L${point.x},${point.y}`;
+                }
+                path += 'Z';
+
+                const gradId = `grad-${defs.length}`;
+                defs.push(`
+                    <radialGradient id="${gradId}" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="${color}" stop-opacity="0.8" />
+                        <stop offset="100%" stop-color="${color}" stop-opacity="0.2" />
+                    </radialGradient>
+                `);
+
+                waves += `<path d="${path}" fill="url(#${gradId})" stroke="${color}" stroke-width="1" />`;
+                return waves;
+            }
+        ];
+
+        // --- NEW: Inner element functions ---
+        const innerElementFunctions = [
+            ({ cx, cy, r, hashChunk, color }) => {
+                // Concentric circles
+                const circles = 3 + parseInt(hashChunk[0], 16) % 4;
+                let content = '';
+                for (let i = 0; i < circles; i++) {
+                    const radius = r * 0.2 * (i + 1);
+                    const strokeWidth = 1 + (parseInt(hashChunk[1], 16) % 3);
+                    content += `<circle cx="${cx}" cy="${cy}" r="${radius}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" />`;
+                }
+                return content;
+            },
+            ({ cx, cy, r, hashChunk, color }) => {
+                // Geometric center
+                const sides = 3 + parseInt(hashChunk[0], 16) % 6;
+                const size = r * 0.4;
+                let points = '';
+                for (let i = 0; i < sides; i++) {
+                    const angle = 360 / sides * i;
+                    const point = polarToCartesian(cx, cy, size, angle);
+                    points += `${point.x},${point.y} `;
+                }
+                return `<polygon points="${points}" fill="${color}" opacity="0.7" />`;
+            },
+            ({ cx, cy, r, hashChunk, color }) => {
+                // Starburst
+                const rays = 8 + parseInt(hashChunk[0], 16) % 12;
+                let content = '';
+                for (let i = 0; i < rays; i++) {
+                    const angle = (360 / rays) * i;
+                    const innerPoint = polarToCartesian(cx, cy, r * 0.1, angle);
+                    const outerPoint = polarToCartesian(cx, cy, r * 0.4, angle);
+                    content += `<line x1="${innerPoint.x}" y1="${innerPoint.y}" x2="${outerPoint.x}" y2="${outerPoint.y}" stroke="${color}" stroke-width="2" />`;
+                }
+                return content;
+            }
+        ];
+
+        // --- Main Generation Function ---
+        async function generateMandala(userId) {
+            const hash = await sha256(userId);
+
+            // --- GLOBAL PARAMETERS from hash ---
+            const masterSymmetry = (parseInt(hash.substring(0, 2), 16) % 7 + 3) * 2;
+            const layerCount = 3 + (parseInt(hash.substring(2, 3), 16) % 5);
+            const baseHue = parseInt(hash.substring(3, 6), 16) % 360;
+            const paletteStyle = parseInt(hash.substring(6, 7), 16) % 4;
+            const reflectionEnabled = reflectionToggle.checked;
+            const innerElementsEnabled = innerToggle.checked;
+            const gradientEnabled = gradientToggle.checked;
+            const animateEnabled = animateToggle.checked;
+
+            // Generate Palette with enhanced color schemes
+            const palette = [];
+            for (let i = 0; i < layerCount; i++) {
+                let h, s, l;
+
+                switch (paletteStyle) {
+                    case 0: // Analogous
+                        h = (baseHue + (i * 20) + 360) % 360;
+                        s = 60 + (parseInt(hash.substring(7 + i, 8 + i), 16) % 21);
+                        l = 50 + (parseInt(hash.substring(14 + i, 15 + i), 16) % 21);
+                        break;
+                    case 1: // Complementary
+                        h = (baseHue + (i % 2 === 0 ? 0 : 180) + (i * 10) + 360) % 360;
+                        s = 70 + (parseInt(hash.substring(7 + i, 8 + i), 16) % 21);
+                        l = 60 + (parseInt(hash.substring(14 + i, 15 + i), 16) % 21);
+                        break;
+                    case 2: // Triadic
+                        h = (baseHue + (i % 3 * 120) + (i * 5) + 360) % 360;
+                        s = 65 + (parseInt(hash.substring(7 + i, 8 + i), 16) % 16);
+                        l = 55 + (parseInt(hash.substring(14 + i, 15 + i), 16) % 16);
+                        break;
+                    case 3: // Monochromatic with variations
+                        h = baseHue;
+                        s = 40 + (parseInt(hash.substring(7 + i, 8 + i), 16) % 31);
+                        l = 30 + (parseInt(hash.substring(14 + i, 15 + i), 16) % 41);
+                        break;
+                }
+                palette.push(`hsl(${h}, ${s}%, ${l}%)`);
+            }
+            const bgColor = `hsl(${baseHue}, 15%, 8%)`;
+
+            // --- SVG Generation ---
+            const size = 512;
+            const center = size / 2;
+            let svgContent = '';
+            let defs = [];
+            const maxRadius = size / 2 * 0.95;
+
+            // Layer spacing
+            const layerThickness = maxRadius / layerCount;
+
+            // Add inner elements if enabled
+            if (innerElementsEnabled) {
+                const innerHashChunk = hash.substring(20, 24);
+                const innerFuncIndex = parseInt(innerHashChunk[0], 16) % innerElementFunctions.length;
+                const innerColor = palette[0];
+                const innerRadius = layerThickness * 1.5;
+
+                svgContent += innerElementFunctions[innerFuncIndex]({
+                    cx: center,
+                    cy: center,
+                    r: innerRadius,
+                    hashChunk: innerHashChunk,
+                    color: innerColor
+                });
+            }
+
+            // Generate each layer
+            for (let i = 0; i < layerCount; i++) {
+                const layerHashChunk = hash.substring(21 + i * 4, 25 + i * 4);
+                const currentRadius = (layerThickness * i) + (layerThickness / 2);
+                const shapeFuncIndex = parseInt(layerHashChunk[0], 16) % shapeFunctions.length;
+                const repetitionModifier = 1 + (parseInt(layerHashChunk[1], 16) % 3);
+                const layerRepetitions = masterSymmetry * repetitionModifier;
+
+                // Generate layer content
+                let layerContent = shapeFunctions[shapeFuncIndex]({
+                    hashChunk: layerHashChunk.substring(1),
+                    cx: center,
+                    cy: center,
+                    r: currentRadius,
+                    count: layerRepetitions,
+                    color: palette[i],
+                    defs: gradientEnabled ? defs : [],
+                    layerThickness: layerThickness
+                });
+
+                // Add reflection if enabled
+                if (reflectionEnabled) {
+                    layerContent += `<g transform="translate(${center},${center}) scale(1,-1) translate(-${center},-${center})">${layerContent}</g>`;
+                }
+
+                svgContent += layerContent;
+            }
+
+            // Animation classes
+            let animationClass = '';
+            if (animateEnabled) {
+                const animationType = parseInt(hash[10], 16) % 4;
+                const animationClasses = ['pulse', 'rotate', 'spin', 'ripple'];
+                animationClass = animationClasses[animationType];
+            }
+
+            // Build SVG
+            let svgString = `<svg viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg" class="w-full h-full ${animationClass}">`;
+
+            if (defs.length > 0) {
+                svgString += `<defs>${defs.join('')}</defs>`;
+            }
+
+            svgString += `<rect width="100%" height="100%" fill="${bgColor}"/>`;
+            svgString += `<g>${svgContent}</g>`;
+            svgString += '</svg>';
+
+            return { svgString, hash };
+        }
+
+        // --- Event Handlers ---
+        async function handleGenerate() {
+            try {
+                const userId = userIdInput.value;
+                if (!userId) {
+                    alert("Please enter or generate a User ID.");
+                    return;
+                }
+                const { svgString, hash } = await generateMandala(userId);
+                avatarOutput.innerHTML = svgString;
+                hashOutput.textContent = hash;
+
+                // Format SVG code for display
+                const formattedSVG = svgString
+                    .replace(/></g, '>\n<')
+                    .replace(/><defs>/g, '>\n<defs>')
+                    .replace(/<\/defs></g, '</defs>\n<')
+                    .replace(/><g>/g, '>\n<g>')
+                    .replace(/<\/g></g, '</g>\n<');
+
+                svgCodeOutput.textContent = formattedSVG;
+            } catch (error) {
+                console.error("An error occurred during generation:", error);
+                avatarOutput.innerHTML = `<div class="text-red-500 p-4">An error occurred. Please check the console.</div>`;
+            }
+        }
+
+        randomIdBtn.addEventListener('click', () => {
+            userIdInput.value = crypto.randomUUID();
+            handleGenerate();
+        });
+        generateBtn.addEventListener('click', handleGenerate);
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            userIdInput.value = crypto.randomUUID();
+            handleGenerate();
+        });
+    </script>
+</body>
+
+</html>
