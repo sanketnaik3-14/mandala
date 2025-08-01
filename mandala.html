@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Procedural Mandala Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #avatarOutput svg {
+            transition: transform 0.5s ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-900 text-slate-200 antialiased">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1
+                class="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500">
+                Advanced Mandala Generator</h1>
+            <p class="mt-4 text-lg text-slate-400">Creating structured, harmonious designs from a User ID.</p>
+        </header>
+
+        <main class="space-y-8">
+            <!-- Input & Output -->
+            <div class="glassmorphism rounded-2xl p-6 shadow-2xl">
+                <div class="flex flex-col md:flex-row gap-8 items-center">
+                    <!-- Controls -->
+                    <div class="w-full md:w-1/3 space-y-4">
+                        <div>
+                            <label for="userIdInput" class="block mb-2 text-sm font-medium text-slate-300">User ID
+                                (Seed)</label>
+                            <input type="text" id="userIdInput"
+                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-white focus:ring-2 focus:ring-pink-500 focus:outline-none">
+                        </div>
+                        <button id="randomIdBtn"
+                            class="w-full bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2 px-4 rounded-lg transition">Generate
+                            Random ID</button>
+                        <button id="generateBtn"
+                            class="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white font-bold py-3 px-8 rounded-lg text-lg shadow-lg transform hover:scale-105 transition">
+                            Generate Avatar
+                        </button>
+                    </div>
+                    <!-- Avatar Display -->
+                    <div
+                        class="w-full md:w-2/3 flex justify-center items-center bg-slate-800/50 rounded-lg p-4 min-h-[384px]">
+                        <div id="avatarOutput" class="w-96 h-96 rounded-full shadow-2xl bg-slate-900"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SVG Code Section -->
+            <div class="glassmorphism rounded-2xl p-6 shadow-2xl">
+                <h2 class="text-xl font-semibold mb-4 text-white">Generated SVG Code</h2>
+                <div class="bg-slate-900 rounded-lg p-4 max-h-96 overflow-auto border border-slate-700">
+                    <pre><code id="svgCodeOutput" class="language-xml text-sm text-slate-300 whitespace-pre-wrap"></code></pre>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- DOM Elements ---
+        const userIdInput = document.getElementById('userIdInput');
+        const randomIdBtn = document.getElementById('randomIdBtn');
+        const generateBtn = document.getElementById('generateBtn');
+        const avatarOutput = document.getElementById('avatarOutput');
+        const svgCodeOutput = document.getElementById('svgCodeOutput');
+
+        // --- Hashing and PRNG ---
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                hash = ((hash << 5) - hash) + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
+        function seededRandom(seed) {
+            return function () {
+                seed = (seed * 9301 + 49297) % 233280;
+                return seed / 233280;
+            };
+        }
+
+        // --- SVG Path Helper ---
+        // Converts polar coordinates (angle, radius) to Cartesian (x, y)
+        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
+            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
+            return {
+                x: centerX + (radius * Math.cos(angleInRadians)),
+                y: centerY + (radius * Math.sin(angleInRadians))
+            };
+        }
+
+        // --- PROCEDURAL SHAPE FUNCTIONS ---
+        const shapeFunctions = [
+            // 1. Pointed Petals
+            (rand, center, radius, count, color, opacity) => {
+                let path = '';
+                const angleStep = 360 / count;
+                const innerRadius = radius * (0.4 + rand() * 0.4);
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const p1 = polarToCartesian(center, center, radius, angle - angleStep / 3);
+                    const p2 = polarToCartesian(center, center, radius, angle + angleStep / 3);
+                    const tip = polarToCartesian(center, center, radius, angle);
+                    const base = polarToCartesian(center, center, innerRadius, angle);
+                    path += `M ${base.x},${base.y} Q ${p1.x},${p1.y} ${tip.x},${tip.y} Q ${p2.x},${p2.y} ${base.x},${base.y} Z `;
+                }
+                return `<path d="${path}" fill="${color}" opacity="${opacity}" />`;
+            },
+            // 2. Solid Ring with Cutouts
+            (rand, center, radius, count, color, opacity) => {
+                const ringWidth = radius * (0.15 + rand() * 0.2);
+                const innerRadius = radius - ringWidth;
+                let path = `<path d="M ${center - radius}, ${center} A ${radius},${radius} 0 1,0 ${center + radius},${center} A ${radius},${radius} 0 1,0 ${center - radius},${center} Z M ${center - innerRadius}, ${center} A ${innerRadius},${innerRadius} 0 1,1 ${center + innerRadius},${center} A ${innerRadius},${innerRadius} 0 1,1 ${center - innerRadius},${center} Z" fill="${color}" fill-rule="evenodd" opacity="${opacity}" />`;
+
+                // Add cutouts
+                const cutoutCount = count / 2;
+                const angleStep = 360 / cutoutCount;
+                const cutoutRadius = ringWidth * 0.3;
+                for (let i = 0; i < cutoutCount; i++) {
+                    const p = polarToCartesian(center, center, radius - ringWidth / 2, i * angleStep);
+                    path += `<circle cx="${p.x}" cy="${p.y}" r="${cutoutRadius}" fill="black" />`;
+                }
+                // Use a mask to apply cutouts
+                const maskId = `mask-${radius}`;
+                return `<defs><mask id="${maskId}"><rect width="100%" height="100%" fill="white"/>${path.split('</path>')[1]}</mask></defs><g mask="url(#${maskId})">${path.split('</path>')[0]}</path></g>`;
+            },
+            // 3. Fine Spikes
+            (rand, center, radius, count, color, opacity) => {
+                let path = '';
+                const angleStep = 360 / count;
+                const innerRadius = radius * 0.85;
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const p1 = polarToCartesian(center, center, innerRadius, angle - angleStep / 2);
+                    const p2 = polarToCartesian(center, center, innerRadius, angle + angleStep / 2);
+                    const tip = polarToCartesian(center, center, radius, angle);
+                    path += `M ${p1.x},${p1.y} L ${tip.x},${tip.y} L ${p2.x},${p2.y} Z `;
+                }
+                return `<path d="${path}" fill="${color}" opacity="${opacity}" />`;
+            },
+            // 4. Arched Gates
+            (rand, center, radius, count, color, opacity) => {
+                let path = '';
+                const angleStep = 360 / count;
+                const innerRadius = radius * 0.7;
+                const strokeWidth = radius * 0.05;
+                for (let i = 0; i < count; i++) {
+                    const angle = i * angleStep;
+                    const p1_inner = polarToCartesian(center, center, innerRadius, angle - angleStep / 4);
+                    const p1_outer = polarToCartesian(center, center, radius, angle - angleStep / 4);
+                    const p2_inner = polarToCartesian(center, center, innerRadius, angle + angleStep / 4);
+                    const p2_outer = polarToCartesian(center, center, radius, angle + angleStep / 4);
+                    path += `M ${p1_inner.x} ${p1_inner.y} L ${p1_outer.x} ${p1_outer.y} `;
+                    path += `A ${radius} ${radius} 0 0 1 ${p2_outer.x} ${p2_outer.y} `;
+                    path += `L ${p2_inner.x} ${p2_inner.y} `;
+                }
+                return `<path d="${path}" stroke="${color}" stroke-width="${strokeWidth}" fill="none" opacity="${opacity}" stroke-linecap="round"/>`;
+            }
+        ];
+
+        // --- Main Generation Function ---
+        function generateMandala(userId) {
+            const seed = simpleHash(userId);
+            const rand = seededRandom(seed);
+
+            const numLayers = Math.floor(rand() * 5) + 3; // 3 to 7 layers
+            const baseHue = rand() * 360;
+
+            const palette = [];
+            for (let i = 0; i < numLayers; i++) {
+                const h = (baseHue + (rand() * 40 - 20) + 360) % 360;
+                const s = 60 + rand() * 20;
+                const l = 60 + rand() * 15;
+                palette.push(`hsl(${h}, ${s}%, ${l}%)`);
+            }
+            const bgColor = `hsl(${baseHue}, 15%, 10%)`;
+
+            const size = 400;
+            const center = size / 2;
+            let svgContent = '';
+
+            for (let i = 0; i < numLayers; i++) {
+                const layerRadius = (size / 2 * 0.9) * ((i + 1) / numLayers);
+                const color = palette[i];
+                const opacity = 0.75 + rand() * 0.25;
+
+                // Choose a shape function for this layer
+                const shapeFunc = shapeFunctions[Math.floor(rand() * shapeFunctions.length)];
+
+                // Determine the number of repetitions for the shape on this layer
+                const repetitionBase = (i + 1) * 4;
+                const count = repetitionBase * Math.floor(rand() * 3 + 2); // e.g. 8, 12, 16 for layer 1
+
+                svgContent += shapeFunc(rand, center, layerRadius, count, color, opacity);
+            }
+
+            let svgString = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">`;
+            svgString += `<rect width="100%" height="100%" fill="${bgColor}"/>`;
+            svgString += svgContent;
+            svgString += '</svg>';
+
+            return { svgString };
+        }
+
+        // --- Event Handlers ---
+        function handleGenerate() {
+            const userId = userIdInput.value;
+            if (!userId) {
+                alert("Please enter or generate a User ID.");
+                return;
+            }
+            const { svgString } = generateMandala(userId);
+            avatarOutput.innerHTML = svgString;
+            svgCodeOutput.textContent = svgString.replace(/></g, '>\n  <').replace(/<defs>/g, '\n<defs>').replace(/<\/defs>/g, '\n</defs>').replace(/<g/g, '\n <g');
+        }
+
+        randomIdBtn.addEventListener('click', () => {
+            userIdInput.value = crypto.randomUUID();
+            handleGenerate();
+        });
+        generateBtn.addEventListener('click', handleGenerate);
+        window.addEventListener('DOMContentLoaded', () => {
+            userIdInput.value = crypto.randomUUID();
+            handleGenerate();
+        });
+    </script>
+</body>
+
+</html>
